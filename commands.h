@@ -57,7 +57,7 @@
                 printf ("Bad jumping\n");\
                 cpu_dump (cpu);\
                 assert (0);\
-            }\
+            }
 
 //-----------------------------------
 //!
@@ -93,7 +93,7 @@
                 printf ("COMPARING is NOT Possible, stack size < 2\n");\
                 cpu_dump (cpu);\
                 assert (0);\
-            }\
+            }
 
 //-----------------------------------
 //!
@@ -250,7 +250,7 @@
 \
         free (register_name);\
     }\
-    else\
+    else
 
 
 #define PUSH_VAL_CASE\
@@ -271,7 +271,8 @@
                 UNKNOWN_REGISTER\
             }\
 \
-            break;\
+            break;
+
 
 #define PUSH_RAM_CASE\
     case RAM:\
@@ -283,8 +284,9 @@
             else\
                 cpu.stak.Push (cpu.ram[heap[i + 1]]);\
 
+
 //-------------------------------------------------------------
-//! PUSH Realisation
+//! PUSH Realisation for CPU
 //! All types of PUSH
 //!
 //-------------------------------------------------------------
@@ -298,7 +300,7 @@
     }\
 \
     i++;\
-    break;\
+    break;
 
 //-------------------------------------------------------------
 //! POP code for compiler
@@ -344,7 +346,8 @@
 \
         free (register_name);\
     }\
-    else\
+    else
+
 
 #define POP_REG_CASE\
 case REG: {\
@@ -357,7 +360,8 @@ case REG: {\
                 UNKNOWN_REGISTER\
             }\
         }\
-            break;\
+            break;
+
 
 #define POP_RAM_CASE\
 case RAM: {\
@@ -368,10 +372,11 @@ case RAM: {\
             }\
             else\
                 cpu.ram[heap[i + 1]] = cpu.stak.Pop ();\
-        }\
+        }
+
 
 //-------------------------------------------------------------
-//! POP Realisation
+//! POP Realisation for CPU
 //! All types of PUSH
 //!
 //-------------------------------------------------------------
@@ -385,7 +390,7 @@ case RAM: {\
     }\
     i++;\
 \
-    break;\
+    break;
 
 
 enum commands {
