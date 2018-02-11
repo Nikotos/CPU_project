@@ -1,4 +1,5 @@
 //----FOR GENERATING COMMANDS
+#ifdef DEF_CMD
 
 #define COMMAND(name)\
     if (strcmp (command, #name) == 0)
@@ -190,6 +191,202 @@
             }\
             break;
 
+//-------------------------------------------------------------
+//! PUSH code for compiler
+//! All types of PUSH
+//!
+//-------------------------------------------------------------
+#define PUSH_COMMAND\
+    COMMAND(PUSH) {\
+\
+        int bites = -1;\
+        assert (&bites);\
+\
+        char* register_name = (char*) calloc (SIZEOF_REG, sizeof (*register_name));\
+        assert (register_name);\
+\
+        fscanf (inputs, " %[ABCDX] %n", register_name, &bites);\
+\
+        if (bites == -1)\
+        {\
+            int value = 0;\
+            assert (&value);\
+\
+            fscanf (inputs, "[%d]%n", &value, &bites);\
+\
+            if (bites == -1)\
+            {\
+                fscanf (inputs, "%d%n", &value, &bites);\
+\
+                IS_IT_GOOD_COMMAND\
+                else {\
+                    heap[(*index)] = PUSH;\
+                    (*index)++;\
+                    heap[(*index)] = VAL;\
+                    (*index)++;\
+                    heap[(*index)] = value;\
+                    (*index)++;\
+                }\
+            }\
+            else\
+            {\
+                heap[(*index)] = PUSH;\
+                (*index)++;\
+                heap[(*index)] = RAM;\
+                (*index)++;\
+                heap[(*index)] = value;\
+                (*index)++;\
+            }\
+        }\
+        else\
+        {\
+            heap[(*index)] = PUSH;\
+            (*index)++;\
+            heap[(*index)] = REG;\
+            (*index)++;\
+            heap[(*index)] = tell_register (register_name);\
+            (*index)++;\
+        }\
+\
+        free (register_name);\
+    }\
+    else\
+
+
+#define PUSH_VAL_CASE\
+        case VAL:\
+            cpu.stak.Push (heap[i + 1]);\
+\
+            break;
+
+
+#define PUSH_REG_CASE\
+        case REG:\
+            switch (heap[i + 1]) {\
+\
+                REGISTER_PUSH(AX, cpu.ax)\
+                REGISTER_PUSH(BX, cpu.bx)\
+                REGISTER_PUSH(CX, cpu.cx)\
+                REGISTER_PUSH(DX, cpu.dx)\
+                UNKNOWN_REGISTER\
+            }\
+\
+            break;\
+
+#define PUSH_RAM_CASE\
+    case RAM:\
+            if (heap[i + 1] >= RAM_SIZE)\
+            {\
+                printf ("WRONG ADDRESS OF RAM [%d]", heap[i + 1]);\
+                assert (0);\
+            }\
+            else\
+                cpu.stak.Push (cpu.ram[heap[i + 1]]);\
+
+//-------------------------------------------------------------
+//! PUSH Realisation
+//! All types of PUSH
+//!
+//-------------------------------------------------------------
+#define PUSH_CPU_CODE\
+    case PUSH:\
+        i++;\
+    switch (heap[i]) {\
+        PUSH_VAL_CASE\
+        PUSH_REG_CASE\
+        PUSH_RAM_CASE\
+    }\
+\
+    i++;\
+    break;\
+
+//-------------------------------------------------------------
+//! POP code for compiler
+//! All types of PUSH
+//!
+//-------------------------------------------------------------
+#define POP_COMMAND \
+    COMMAND(POP) {\
+        int bites = -1;\
+        assert (&bites);\
+\
+        char* register_name = (char*) calloc (SIZEOF_REG, sizeof (*register_name));\
+        assert (register_name);\
+\
+        fscanf (inputs, " %[ABCDX] %n", register_name, &bites);\
+\
+        if (bites == -1)\
+        {\
+            int value = 0;\
+            assert (&value);\
+\
+            fscanf (inputs, "[%d]%n", &value, &bites);\
+\
+            IS_IT_GOOD_COMMAND\
+            else {\
+                heap[(*index)] = POP;\
+                (*index)++;\
+                heap[(*index)] = RAM;\
+                (*index)++;\
+                heap[(*index)] = value;\
+                (*index)++;\
+            }\
+        }\
+        else\
+        {\
+            heap[(*index)] = POP;\
+            (*index)++;\
+            heap[(*index)] = REG;\
+            (*index)++;\
+            heap[(*index)] = tell_register (register_name);\
+            (*index)++;\
+        }\
+\
+        free (register_name);\
+    }\
+    else\
+
+#define POP_REG_CASE\
+case REG: {\
+            switch (heap[i + 1]){\
+\
+                REGISTER_POP(AX, cpu.ax)\
+                REGISTER_POP(BX, cpu.bx)\
+                REGISTER_POP(CX, cpu.cx)\
+                REGISTER_POP(DX, cpu.dx)\
+                UNKNOWN_REGISTER\
+            }\
+        }\
+            break;\
+
+#define POP_RAM_CASE\
+case RAM: {\
+            if (heap[i + 1] >= RAM_SIZE)\
+            {\
+                printf ("WRONG ADDRESS OF RAM [%d]", heap[i + 1]);\
+                assert (0);\
+            }\
+            else\
+                cpu.ram[heap[i + 1]] = cpu.stak.Pop ();\
+        }\
+
+//-------------------------------------------------------------
+//! POP Realisation
+//! All types of PUSH
+//!
+//-------------------------------------------------------------
+#define POP_CPU_CODE\
+    case POP:\
+        i++;\
+    IS_STACK_EMPTY;\
+    switch (heap[i]) {\
+        POP_REG_CASE\
+        POP_RAM_CASE\
+    }\
+    i++;\
+\
+    break;\
+
 
 enum commands {
     END   =  0,
@@ -229,177 +426,9 @@ enum push_types {
 };
 
 
-//-------------------------------------------------------------
-//! PUSH Realisation
-//! All types of PUSH
-//!
-//-------------------------------------------------------------
-DEF_CMD(PUSH,
-COMMAND(PUSH) {
+DEF_CMD(PUSH,PUSH_COMMAND,PUSH_CPU_CODE)
 
-    int bites = -1;
-    assert (&bites);
-
-    char* register_name = (char*) calloc (SIZEOF_REG, sizeof (*register_name));
-    assert (register_name);
-
-    fscanf (inputs, " %[ABCDX] %n", register_name, &bites);
-
-    if (bites == -1)
-    {
-        int value = 0;
-        assert (&value);
-
-        fscanf (inputs, "[%d]%n", &value, &bites);
-
-        if (bites == -1)
-        {
-            fscanf (inputs, "%d%n", &value, &bites);
-
-            IS_IT_GOOD_COMMAND
-
-            else {
-                heap[(*index)] = PUSH;
-                (*index)++;
-                heap[(*index)] = VAL;
-                (*index)++;
-                heap[(*index)] = value;
-                (*index)++;
-            }
-        }
-        else
-        {
-            heap[(*index)] = PUSH;
-            (*index)++;
-            heap[(*index)] = RAM;
-            (*index)++;
-            heap[(*index)] = value;
-            (*index)++;
-        }
-    }
-    else
-    {
-        heap[(*index)] = PUSH;
-        (*index)++;
-        heap[(*index)] = REG;
-        (*index)++;
-        heap[(*index)] = tell_register (register_name);
-        (*index)++;
-    }
-
-    free (register_name);
-}
-else,
-        case PUSH:
-            i++;
-
-                switch (heap[i]) {
-                    case VAL:
-                        cpu.stak.Push (heap[i + 1]);
-
-                        break;
-                    case REG:
-                        switch (heap[i + 1]) {
-
-                            REGISTER_PUSH(AX, cpu.ax)
-                            REGISTER_PUSH(BX, cpu.bx)
-                            REGISTER_PUSH(CX, cpu.cx)
-                            REGISTER_PUSH(DX, cpu.dx)
-                            UNKNOWN_REGISTER
-                        }
-
-                        break;
-                    case RAM:
-                        if (heap[i + 1] >= RAM_SIZE)
-                        {
-                            printf ("WRONG ADDRESS OF RAM [%d]", heap[i + 1]);
-                            assert (0);
-                        }
-                        else
-                            cpu.stak.Push (cpu.ram[heap[i + 1]]);
-                }
-
-                i++;
-                break;)
-
-
-
-//-------------------------------------------------------------
-//! POP Realisation
-//! All types of POP
-//!
-//-------------------------------------------------------------
-DEF_CMD(POP,
-COMMAND(POP) {
-    int bites = -1;
-    assert (&bites);
-
-    char* register_name = (char*) calloc (SIZEOF_REG, sizeof (*register_name));
-    assert (register_name);
-
-    fscanf (inputs, " %[ABCDX] %n", register_name, &bites);
-
-    if (bites == -1)
-    {
-        int value = 0;
-        assert (&value);
-
-        fscanf (inputs, "[%d]%n", &value, &bites);
-
-        IS_IT_GOOD_COMMAND
-        else {
-            heap[(*index)] = POP;
-            (*index)++;
-            heap[(*index)] = RAM;
-            (*index)++;
-            heap[(*index)] = value;
-            (*index)++;
-        }
-    }
-    else
-    {
-        heap[(*index)] = POP;
-        (*index)++;
-        heap[(*index)] = REG;
-        (*index)++;
-        heap[(*index)] = tell_register (register_name);
-        (*index)++;
-    }
-
-    free (register_name);
-}
-else,
-        case POP:
-            i++;
-                IS_STACK_EMPTY;
-                switch (heap[i])
-                {
-                    case REG:
-                    {
-                        switch (heap[i + 1]){
-
-                            REGISTER_POP(AX, cpu.ax)
-                            REGISTER_POP(BX, cpu.bx)
-                            REGISTER_POP(CX, cpu.cx)
-                            REGISTER_POP(DX, cpu.dx)
-                            UNKNOWN_REGISTER
-                        }
-                        break;
-                    }
-                    case RAM:
-                    {
-                        if (heap[i + 1] >= RAM_SIZE)
-                        {
-                            printf ("WRONG ADDRESS OF RAM [%d]", heap[i + 1]);
-                            assert (0);
-                        }
-                        else
-                            cpu.ram[heap[i + 1]] = cpu.stak.Pop ();
-                    }
-                }
-                i++;
-
-                break;)
+DEF_CMD(POP, POP_COMMAND, POP_CPU_CODE)
 
 DEF_CMD(IN, COMMON_COMMAND(IN),
         case IN: {
@@ -409,7 +438,7 @@ DEF_CMD(IN, COMMON_COMMAND(IN),
             scanf("%lf", &val);
             cpu.stak.Push(val);
         }
-            break;)
+                break;)
 
 DEF_CMD(OUT,COMMON_COMMAND(OUT),
         case OUT: {
@@ -481,3 +510,4 @@ DEF_REG(DX, REGISTER(DX))
 #undef UNKNOWN_REGISTER
 #undef TRICKY_OPERATION
 #undef USUAL_OPERATION
+#endif
